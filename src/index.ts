@@ -2,11 +2,11 @@ import { defineInterface } from '@directus/extensions-sdk';
 import InterfaceComponent from './interface.vue';
 
 export default defineInterface({
-	id: 'custom',
-	name: 'Custom',
-	icon: 'box',
-	description: 'This is my custom interface!',
+	id: 'surveyjs-creator',
+	name: 'SurveyJS Creator',
+	icon: 'poll',
+	description: 'Create and edit surveys using SurveyJS Creator',
 	component: InterfaceComponent,
 	options: null,
-	types: ['string'],
+	types: ['json', 'code'],
 });

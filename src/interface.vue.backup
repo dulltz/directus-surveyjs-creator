@@ -1,0 +1,118 @@
+<template>
+	<div class="surveyjs-creator-interface">
+		<SurveyCreatorComponent :modelValue="creator" />
+	</div>
+</template>
+
+<script lang="ts">
+import { defineComponent, ref, watch, onMounted } from 'vue';
+import { SurveyCreatorComponent } from 'survey-creator-vue';
+import { SurveyCreatorModel } from 'survey-creator-core';
+import 'survey-core/survey-core.min.css';
+import 'survey-creator-core/survey-creator-core.min.css';
+
+interface SurveyJSON {
+	title?: string;
+	pages?: any[];
+	[key: string]: any;
+}
+
+export default defineComponent({
+	components: {
+		SurveyCreatorComponent,
+	},
+	props: {
+		value: {
+			type: [String, Object],
+			default: null,
+		},
+	},
+	emits: ['input'],
+	setup(props, { emit }) {
+		const creator = ref<SurveyCreatorModel | null>(null);
+
+		const defaultSurvey: SurveyJSON = {
+			title: 'New Survey',
+			pages: [
+				{
+					name: 'page1',
+					elements: [],
+				},
+			],
+		};
+
+		function parseSurveyValue(value: any): SurveyJSON {
+			if (!value) {
+				return defaultSurvey;
+			}
+
+			// If value is already an object, return it
+			if (typeof value === 'object') {
+				return value;
+			}
+
+			// If value is a string, try to parse it
+			if (typeof value === 'string') {
+				try {
+					return JSON.parse(value);
+				} catch (error) {
+					console.warn('Failed to parse survey JSON, using default:', error);
+					return defaultSurvey;
+				}
+			}
+
+			return defaultSurvey;
+		}
+
+		function initializeCreator() {
+			const surveyJson = parseSurveyValue(props.value);
+
+			const creatorOptions = {
+				showLogicTab: true,
+				showJSONEditorTab: true,
+				showThemeTab: true,
+				isAutoSave: true,
+			};
+
+			const newCreator = new SurveyCreatorModel(creatorOptions);
+			newCreator.JSON = surveyJson;
+
+			// Save survey function
+			newCreator.saveSurveyFunc = (saveNo: number, callback: (saveNo: number, success: boolean) => void) => {
+				const surveyJson = newCreator.JSON;
+				const jsonString = JSON.stringify(surveyJson);
+				emit('input', jsonString);
+				callback(saveNo, true);
+			};
+
+			creator.value = newCreator;
+		}
+
+		// Watch for value changes from parent
+		watch(
+			() => props.value,
+			(newValue) => {
+				if (creator.value) {
+					const surveyJson = parseSurveyValue(newValue);
+					creator.value.JSON = surveyJson;
+				}
+			}
+		);
+
+		onMounted(() => {
+			initializeCreator();
+		});
+
+		return {
+			creator,
+		};
+	},
+});
+</script>
+
+<style scoped>
+.surveyjs-creator-interface {
+	width: 100%;
+	height: 600px;
+}
+</style>
