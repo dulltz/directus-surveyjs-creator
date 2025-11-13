@@ -1,0 +1,74 @@
+{
+	"name": "@dulltz/directus-surveyjs-creator",
+	"description": "Directus extension to create surveys using surveyjs/survey-creator",
+	"icon": "extension",
+	"version": "1.0.0",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/dulltz/directus-surveyjs-creator.git"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-extension-bundle"
+	],
+	"type": "module",
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"files": [
+		"dist"
+	],
+	"directus:extension": {
+		"type": "bundle",
+		"partial": true,
+		"path": {
+			"app": "dist/app.js",
+			"api": "dist/api.js"
+		},
+		"entries": [
+			{
+				"type": "interface",
+				"name": "surveyjs-creator-interface",
+				"source": "src/index.ts"
+			},
+			{
+				"type": "endpoint",
+				"name": "surveyjs-license",
+				"source": "src/endpoint.ts"
+			}
+		],
+		"host": "^11.0.0"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"build:reload": "npm run build && docker-compose restart directus",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"validate": "directus-extension validate",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:ui": "vitest --ui",
+		"test:coverage": "vitest run --coverage"
+	},
+	"devDependencies": {
+		"@directus/extensions-sdk": "17.0.2",
+		"@vitejs/plugin-vue": "^6.0.1",
+		"@vitest/coverage-v8": "^4.0.8",
+		"@vitest/ui": "^4.0.8",
+		"@vue/test-utils": "^2.4.6",
+		"happy-dom": "^20.0.10",
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.8",
+		"vue": "^3.5.24"
+	},
+	"dependencies": {
+		"survey-core": "^2.3.15",
+		"survey-creator-core": "^2.3.15",
+		"survey-creator-vue": "^2.3.15"
+	}
+}

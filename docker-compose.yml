@@ -1,0 +1,20 @@
+services:
+  directus:
+    image: directus/directus:11
+    ports:
+      - 8055:8055
+    volumes:
+      # Mount the extension directory - Directus 11 uses a flat structure
+      - ./:/directus/extensions/directus-surveyjs-creator
+      # Optional: persist database and uploads
+      - ./data/database:/directus/database
+      - ./data/uploads:/directus/uploads
+    environment:
+      SECRET: '255d861b-5ea1-5996-9aa3-922530ec40b1'
+      ADMIN_EMAIL: 'admin@example.com'
+      ADMIN_PASSWORD: 'admin'
+      DB_CLIENT: 'sqlite3'
+      DB_FILENAME: '/directus/database/data.db'
+      WEBSOCKETS_ENABLED: 'true'
+      EXTENSIONS_AUTO_RELOAD: 'true'
+      SURVEY_JS_LICENSE_KEY: '${SURVEY_JS_LICENSE_KEY:-}'
