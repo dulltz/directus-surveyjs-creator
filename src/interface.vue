@@ -51,54 +51,41 @@ export default defineComponent({
 		};
 
 		async function fetchLicenseKey() {
-			console.log('[SurveyJS] Fetching license key...');
 			try {
 				const response = await fetch('/surveyjs-license');
 				const data = await response.json();
-				console.log('[SurveyJS] License key fetched:', data.licenseKey ? 'present' : 'empty');
 				if (data.licenseKey) {
 					setLicenseKey(data.licenseKey);
-					console.log('[SurveyJS] License key set');
 				}
 			} catch (error) {
-				console.warn('[SurveyJS] Failed to fetch license key:', error);
+				console.warn('Failed to fetch SurveyJS license key:', error);
 			}
 			licenseKeyFetched.value = true;
-			console.log('[SurveyJS] License key fetch completed');
 		}
 
 		function parseSurveyValue(value: any): SurveyJSON {
-			console.log('[SurveyJS] parseSurveyValue input:', value, 'type:', typeof value);
-
 			if (!value) {
-				console.log('[SurveyJS] Value is empty, using default');
 				return defaultSurvey;
 			}
 
 			let parsed: any;
 
-			// If value is already an object, use it
 			if (typeof value === 'object') {
-				console.log('[SurveyJS] Value is already an object');
 				parsed = value;
-			}
-			// If value is a string, try to parse it
-			else if (typeof value === 'string') {
+			} else if (typeof value === 'string') {
 				try {
 					parsed = JSON.parse(value);
-					console.log('[SurveyJS] Parsed string to object:', parsed);
 				} catch (error) {
-					console.warn('[SurveyJS] Failed to parse survey JSON, using default:', error);
+					console.warn('Failed to parse survey JSON, using default:', error);
 					return defaultSurvey;
 				}
 			} else {
-				console.log('[SurveyJS] Unknown value type, using default');
 				return defaultSurvey;
 			}
 
-			// Ensure parsed has required structure
+			// Ensure valid survey structure
 			if (!parsed.pages || !Array.isArray(parsed.pages)) {
-				console.warn('[SurveyJS] Invalid survey structure, using default');
+				console.warn('Invalid survey structure, using default');
 				return defaultSurvey;
 			}
 
@@ -108,23 +95,15 @@ export default defineComponent({
 				elements: page.elements || [],
 			}));
 
-			console.log('[SurveyJS] Final parsed value:', parsed);
 			return parsed;
 		}
 
 		function initializeCreator() {
-			console.log('[SurveyJS] initializeCreator called', {
-				isMounted: isMounted.value,
-				licenseKeyFetched: licenseKeyFetched.value,
-			});
-
 			if (!isMounted.value || !licenseKeyFetched.value) {
-				console.log('[SurveyJS] Not ready to initialize, skipping');
 				return;
 			}
 
 			const surveyJson = parseSurveyValue(props.value);
-			console.log('[SurveyJS] Survey JSON parsed:', surveyJson);
 
 			const creatorOptions = {
 				showLogicTab: false,
@@ -136,52 +115,36 @@ export default defineComponent({
 				showTestSurveyTab: false,
 			};
 
-			console.log('[SurveyJS] Creating SurveyCreatorModel...');
 			const newCreator = new SurveyCreatorModel(creatorOptions);
-			console.log('[SurveyJS] SurveyCreatorModel created');
-
 			newCreator.JSON = surveyJson;
-			console.log('[SurveyJS] Survey JSON set to creator');
 
-			// Save survey function
 			newCreator.saveSurveyFunc = (saveNo: number, callback: (saveNo: number, success: boolean) => void) => {
-				console.log('[SurveyJS] saveSurveyFunc called, saveNo:', saveNo);
 				if (!isMounted.value) {
-					console.log('[SurveyJS] Component unmounted, skipping save');
 					callback(saveNo, false);
 					return;
 				}
 
 				const surveyJson = newCreator.JSON;
 				const jsonString = JSON.stringify(surveyJson);
-				console.log('[SurveyJS] Emitting input event, length:', jsonString.length);
 				emit('input', jsonString);
 				callback(saveNo, true);
-				console.log('[SurveyJS] Survey saved successfully');
 			};
 
 			creator.value = newCreator;
-			console.log('[SurveyJS] Creator initialized successfully');
 		}
 
 		// Watch disabled - causes browser crashes due to SurveyJS Creator memory usage
 		// Note: After saving, you must reload the page to see the updated survey
-		console.log('[SurveyJS] Watch disabled to prevent browser crashes');
-		console.log('[SurveyJS] Please reload the page after saving to see changes');
 
 		onMounted(async () => {
-			console.log('[SurveyJS] onMounted called');
 			isMounted.value = true;
 			await fetchLicenseKey();
 			initializeCreator();
-			console.log('[SurveyJS] onMounted completed');
 		});
 
 		onUnmounted(() => {
-			console.log('[SurveyJS] onUnmounted called');
 			isMounted.value = false;
 			if (creator.value) {
-				// Cleanup creator instance
 				creator.value = null;
 			}
 		});
@@ -194,34 +157,25 @@ export default defineComponent({
 </script>
 
 <style>
+/* Main container - full width layout avoiding Directus sidebars */
 .surveyjs-creator-interface {
-	/* Use available width without being covered by sidebar */
 	position: relative;
-	width: calc(100vw - 240px - 320px); /* Account for left sidebar (240px) and right panel (320px) */
-	margin-left: -32px; /* Compensate for Directus padding */
+	width: calc(100vw - 240px - 320px); /* Left sidebar + right panel */
+	margin-left: -32px;
 	margin-right: -32px;
 	max-width: none;
-	height: auto;
-	max-height: none;
-	overflow: visible;
 	padding: 0 20px;
 	box-sizing: border-box;
 }
 
-/* Adjust for collapsed sidebar */
+/* Responsive adjustments for collapsed sidebar */
 @media (max-width: 960px) {
 	.surveyjs-creator-interface {
 		width: calc(100vw - 64px - 320px);
 	}
 }
 
-/* When right panel is not visible */
-@media (min-width: 961px) {
-	.surveyjs-creator-interface.no-right-panel {
-		width: calc(100vw - 240px - 64px);
-	}
-}
-
+/* Creator wrapper with full height */
 .creator-wrapper {
 	width: 100%;
 	height: calc(100vh - 120px);
@@ -234,6 +188,7 @@ export default defineComponent({
 	padding: 16px;
 }
 
+/* Warning notice for page reload requirement */
 .save-notice {
 	background: #fff3cd;
 	border: 1px solid #ffc107;
@@ -250,6 +205,7 @@ export default defineComponent({
 	font-weight: 600;
 }
 
+/* Loading state */
 .loading {
 	display: flex;
 	align-items: center;
@@ -259,10 +215,10 @@ export default defineComponent({
 	font-size: 14px;
 }
 
-/* Reduce SurveyJS Creator memory usage */
+/* SurveyJS Creator styling */
 :deep(.svc-creator) {
 	contain: layout style paint;
-	height: 100% !important; /* Fill the creator-wrapper */
+	height: 100% !important;
 	width: 100%;
 }
 

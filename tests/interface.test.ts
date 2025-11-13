@@ -2,14 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount, VueWrapper, flushPromises } from '@vue/test-utils';
 import InterfaceComponent from '../src/interface.vue';
 
-// Mock fetch API
+// Mock fetch API for license key
 global.fetch = vi.fn(() =>
 	Promise.resolve({
 		json: () => Promise.resolve({ licenseKey: 'test-license-key' }),
 	} as Response)
 );
 
-// Mock SurveyJS Creator components
+// Mock SurveyJS modules
 vi.mock('survey-creator-vue', () => ({
 	SurveyCreatorComponent: {
 		name: 'SurveyCreatorComponent',
@@ -19,12 +19,11 @@ vi.mock('survey-creator-vue', () => ({
 }));
 
 vi.mock('survey-creator-core', () => ({
-	SurveyCreatorModel: class SurveyCreatorModelMock {
+	SurveyCreatorModel: class {
 		JSON: any;
 		saveSurveyFunc: any;
-
 		constructor(options?: any) {
-			this.JSON = options?.JSON || {};
+			this.JSON = {};
 			this.saveSurveyFunc = vi.fn();
 		}
 	},
