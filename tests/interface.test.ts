@@ -118,9 +118,10 @@ describe('SurveyJS Creator Interface Component', () => {
 	});
 
 	it('should render SurveyCreatorComponent', async () => {
+		const testValue = JSON.stringify({ title: 'Test Survey', pages: [{ name: 'page1', elements: [] }] });
 		wrapper = mount(InterfaceComponent, {
 			props: {
-				value: null,
+				value: testValue,
 			},
 		});
 

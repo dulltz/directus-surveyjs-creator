@@ -1,9 +1,6 @@
 <template>
 	<div class="surveyjs-creator-interface">
 		<div v-if="creator" class="creator-wrapper">
-			<div class="save-notice">
-				💾 After saving, please <strong>reload the page</strong> (F5 or Cmd/Ctrl+R) to see your changes.
-			</div>
 			<SurveyCreatorComponent :model="creator" />
 		</div>
 		<div v-else class="loading">Loading SurveyJS Creator...</div>
@@ -11,7 +8,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onUnmounted } from 'vue';
+import { defineComponent, ref, onMounted, onUnmounted, watch } from 'vue';
 import { SurveyCreatorComponent } from 'survey-creator-vue';
 import { SurveyCreatorModel } from 'survey-creator-core';
 import { setLicenseKey } from 'survey-core';
@@ -39,6 +36,7 @@ export default defineComponent({
 		const creator = ref<SurveyCreatorModel | null>(null);
 		const isMounted = ref(false);
 		const licenseKeyFetched = ref(false);
+		const initialLoadComplete = ref(false);
 
 		const defaultSurvey: SurveyJSON = {
 			title: 'New Survey',
@@ -98,9 +96,19 @@ export default defineComponent({
 			return parsed;
 		}
 
-		function initializeCreator() {
+		function initializeCreator(force: boolean = false) {
 			if (!isMounted.value || !licenseKeyFetched.value) {
 				return;
+			}
+
+			// Don't re-initialize if already complete, unless forced
+			if (initialLoadComplete.value && !force) {
+				return;
+			}
+
+			// Destroy previous creator instance if exists (when force re-initializing)
+			if (creator.value && force) {
+				creator.value = null;
 			}
 
 			const surveyJson = parseSurveyValue(props.value);
@@ -131,15 +139,33 @@ export default defineComponent({
 			};
 
 			creator.value = newCreator;
+			initialLoadComplete.value = true;
 		}
 
-		// Watch disabled - causes browser crashes due to SurveyJS Creator memory usage
-		// Note: After saving, you must reload the page to see the updated survey
+		// Watch for initial props.value load (Directus loads props asynchronously)
+		// This watch automatically stops after the first non-null value is received
+		const stopWatch = watch(() => props.value, (newValue) => {
+			// If we get actual data from Directus (non-null value), initialize/re-initialize
+			if (newValue && licenseKeyFetched.value && isMounted.value) {
+				// Force re-initialization if actual data arrives (even if already initialized with default)
+				initializeCreator(true);
+				// Stop watching after receiving actual data to prevent memory issues
+				stopWatch();
+			}
+		});
 
 		onMounted(async () => {
 			isMounted.value = true;
 			await fetchLicenseKey();
 			initializeCreator();
+
+			// If still not initialized after a short delay (new item with null value),
+			// ensure initialization with default survey
+			setTimeout(() => {
+				if (!initialLoadComplete.value) {
+					initializeCreator();
+				}
+			}, 100);
 		});
 
 		onUnmounted(() => {
@@ -186,23 +212,6 @@ export default defineComponent({
 	border-radius: 8px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 	padding: 16px;
-}
-
-/* Warning notice for page reload requirement */
-.save-notice {
-	background: #fff3cd;
-	border: 1px solid #ffc107;
-	border-radius: 4px;
-	padding: 8px 12px;
-	margin-bottom: 12px;
-	font-size: 13px;
-	color: #856404;
-	text-align: center;
-}
-
-.save-notice strong {
-	color: #333;
-	font-weight: 600;
 }
 
 /* Loading state */

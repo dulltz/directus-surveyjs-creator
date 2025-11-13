@@ -418,3 +418,96 @@ new SurveyCreatorModel()
 - [ ] Interface Options でライセンスキーを設定できるようにする（フィールドごと）
 - [ ] ライセンスキーのバリデーション（形式チェック）
 - [ ] エラーハンドリングの改善（ライセンスキー取得失敗時の UI フィードバック）
+
+### 2025-11-14: 非同期props読み込み問題の解決 ✅
+
+#### 問題
+
+アイテムを開いたときに、保存されたsurvey JSONがdesigner画面に反映されない問題が発生していました。
+
+**根本原因:**
+Directusがprops.valueを**非同期**で設定しているため、`onMounted`時点ではprops.valueが`null`で、その後にデータが設定されていました。
+
+**発見したログ:**
+```
+[DEBUG] onMounted - props.value: null
+[DEBUG] initializeCreator - props.value: Proxy(Object) {title: 'hai', ...}
+```
+
+onMountedの時点ではnullだが、`await fetchLicenseKey()`の実行中にprops.valueが設定されていることが判明。
+
+#### 解決策
+
+**1. watchを追加（初回のみ動作）:**
+- `initialLoadComplete`フラグを追加
+- props.valueが最初に非null値になった時を検知するwatchを追加
+- 初期化完了後、`stopWatch()`を呼んでwatchを停止（メモリクラッシュを防ぐ）
+
+**2. initializeCreator()の改善:**
+```typescript
+function initializeCreator() {
+  if (!isMounted.value || !licenseKeyFetched.value) {
+    return;
+  }
+
+  // Don't initialize with null value - wait for watch to trigger with real data
+  if (!props.value) {
+    return;
+  }
+
+  // ... 初期化処理 ...
+
+  initialLoadComplete.value = true;
+}
+```
+
+**3. watchの実装:**
+```typescript
+const stopWatch = watch(() => props.value, (newValue) => {
+  // Only initialize if we haven't loaded yet and we have a non-null value
+  if (!initialLoadComplete.value && newValue && licenseKeyFetched.value && isMounted.value) {
+    initializeCreator();
+    // Stop watching after initial load to prevent memory issues
+    stopWatch();
+  }
+});
+```
+
+#### 動作フロー
+
+1. コンポーネントマウント（props.value = null）
+2. `onMounted` 実行 → `initializeCreator()` 呼ばれるが、props.valueがnullなのでreturn
+3. Directusが非同期でprops.valueを設定
+4. watchがトリガーされる
+5. props.valueが非nullで、`initialLoadComplete=false`なら、`initializeCreator()`を呼ぶ
+6. Creator初期化完了 → `initialLoadComplete = true`
+7. `stopWatch()`でwatchを停止（これ以降はwatchされない）
+
+#### 結果
+
+- ✅ アイテムを開いたときに、保存されたJSONが即座にdesignerに反映される
+- ✅ メモリクラッシュなし（watchは初回のみで自動停止）
+- ✅ リロード不要（「After saving please reload」の通知を削除）
+- ✅ 全テスト（14/14）パス
+
+#### コードクリーンアップ
+
+- デバッグログを削除
+- 不要な通知バナーを削除
+- テストケースを修正（props.value=nullのテストを更新）
+
+#### 技術的な学び
+
+**Directusのライフサイクル:**
+- Directusは多くのフィールドをレンダリングするため、パフォーマンス最適化のためにprops.valueを非同期で設定している
+- Interface extensionでは、`onMounted`時にprops.valueがnullの可能性を考慮する必要がある
+
+**Vue watchの適切な使い方:**
+- watchは`stopWatch()`で停止できる
+- 1回だけ実行したい場合は、条件を満たしたら即座に`stopWatch()`を呼ぶ
+- これにより、無限ループやメモリリークを防げる
+
+**SurveyJS Creator + Directus:**
+- SurveyJS Creatorは大きなメモリフットプリントを持つ
+- 継続的なwatchはメモリクラッシュを引き起こす
+- 初回ロードのみwatchし、その後は停止するアプローチが最適
