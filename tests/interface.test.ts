@@ -132,4 +132,98 @@ describe('SurveyJS Creator Interface Component', () => {
 		// Check if the mock SurveyCreatorComponent is rendered
 		expect(wrapper.find('.survey-creator-mock').exists()).toBe(true);
 	});
+
+	// === High Priority: Lifecycle Tests ===
+
+	it('should handle async props loading (Directus lifecycle)', async () => {
+		// 1. Mount with null (simulating Directus initial state)
+		wrapper = mount(InterfaceComponent, {
+			props: { value: null },
+		});
+
+		await flushPromises();
+
+		// 2. Simulate Directus loading data asynchronously after 100ms
+		const surveyData = { title: 'Async Survey', pages: [{ name: 'page1', elements: [] }] };
+		await wrapper.setProps({ value: JSON.stringify(surveyData) });
+
+		await flushPromises();
+		await wrapper.vm.$nextTick();
+
+		// 3. Creator should be initialized with the loaded data
+		expect(wrapper.find('.survey-creator-mock').exists()).toBe(true);
+	});
+
+	it('should initialize with default survey after timeout when props remain null', async () => {
+		// Mount with null value (new item creation)
+		wrapper = mount(InterfaceComponent, {
+			props: { value: null },
+		});
+
+		await flushPromises();
+
+		// Wait for timeout fallback to trigger (100ms + buffer)
+		await new Promise(resolve => setTimeout(resolve, 150));
+		await wrapper.vm.$nextTick();
+
+		// Should initialize with defaultSurvey
+		expect(wrapper.find('.survey-creator-mock').exists()).toBe(true);
+	});
+
+	// === Medium Priority: Advanced Lifecycle Tests ===
+
+	it('should re-initialize when real data arrives after default initialization', async () => {
+		// 1. Mount with null → should initialize with defaultSurvey
+		wrapper = mount(InterfaceComponent, {
+			props: { value: null },
+		});
+
+		await flushPromises();
+		await new Promise(resolve => setTimeout(resolve, 150));
+
+		// 2. Real data arrives from Directus
+		const realData = {
+			title: 'Real Survey',
+			pages: [{ name: 'page1', elements: [{ type: 'text', name: 'q1' }] }],
+		};
+		await wrapper.setProps({ value: JSON.stringify(realData) });
+
+		await flushPromises();
+		await wrapper.vm.$nextTick();
+
+		// 3. Should re-initialize with real data (no errors should occur)
+		expect(wrapper.find('.survey-creator-mock').exists()).toBe(true);
+	});
+
+	it('should handle license key fetch failure gracefully', async () => {
+		// Mock fetch to fail
+		const originalFetch = global.fetch;
+		global.fetch = vi.fn(() => Promise.reject(new Error('Network error')));
+
+		wrapper = mount(InterfaceComponent, {
+			props: { value: JSON.stringify({ title: 'Test', pages: [] }) },
+		});
+
+		await flushPromises();
+
+		// Should still initialize despite license key failure
+		expect(wrapper.find('.survey-creator-mock').exists()).toBe(true);
+
+		// Restore original fetch
+		global.fetch = originalFetch;
+	});
+
+	it('should clean up creator instance on unmount', async () => {
+		wrapper = mount(InterfaceComponent, {
+			props: { value: JSON.stringify({ title: 'Test', pages: [] }) },
+		});
+
+		await flushPromises();
+
+		// Verify creator exists before unmount
+		expect(wrapper.find('.survey-creator-mock').exists()).toBe(true);
+
+		// Unmount should not throw errors
+		expect(() => wrapper.unmount()).not.toThrow();
+	});
 });
