@@ -35,6 +35,9 @@ vi.mock('survey-creator-core', () => ({
 				remove: vi.fn(),
 			};
 		}
+		dispose() {
+			// Mock dispose method for cleanup
+		}
 	},
 }));
 
