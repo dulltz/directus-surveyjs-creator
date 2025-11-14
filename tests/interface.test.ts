@@ -22,9 +22,16 @@ vi.mock('survey-creator-core', () => ({
 	SurveyCreatorModel: class {
 		JSON: any;
 		saveSurveyFunc: any;
+		showSaveButton: boolean;
+		onModified: any;
 		constructor(options?: any) {
 			this.JSON = {};
 			this.saveSurveyFunc = vi.fn();
+			this.showSaveButton = true;
+			this.onModified = {
+				add: vi.fn(),
+				remove: vi.fn(),
+			};
 		}
 	},
 }));

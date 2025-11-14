@@ -126,17 +126,17 @@ export default defineComponent({
 			const newCreator = new SurveyCreatorModel(creatorOptions);
 			newCreator.JSON = surveyJson;
 
-			newCreator.saveSurveyFunc = (saveNo: number, callback: (saveNo: number, success: boolean) => void) => {
-				if (!isMounted.value) {
-					callback(saveNo, false);
-					return;
-				}
+			// Hide the save button - use Directus's save button instead
+			newCreator.showSaveButton = false;
+
+			// Auto-sync changes to Directus on any modification
+			newCreator.onModified.add(() => {
+				if (!isMounted.value) return;
 
 				const surveyJson = newCreator.JSON;
 				const jsonString = JSON.stringify(surveyJson);
 				emit('input', jsonString);
-				callback(saveNo, true);
-			};
+			});
 
 			creator.value = newCreator;
 			initialLoadComplete.value = true;
