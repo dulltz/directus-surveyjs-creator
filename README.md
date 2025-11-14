@@ -129,6 +129,9 @@ npm run test:coverage
 # Build for production
 npm run build
 
+# Build and restart Directus (for Docker Compose development)
+npm run build:reload
+
 # Validate extension structure
 npm run validate
 ```
