@@ -1,7 +1,7 @@
 <template>
 	<div class="surveyjs-creator-interface">
 		<div v-if="creator" class="creator-wrapper">
-			<SurveyCreatorComponent :model="creator" />
+			<SurveyCreatorComponent :model="creator as SurveyCreatorModel" />
 		</div>
 		<div v-else class="loading">Loading SurveyJS Creator...</div>
 	</div>
@@ -112,6 +112,7 @@ export default defineComponent({
 
 			// Destroy previous creator instance if exists (when force re-initializing)
 			if (creator.value && force) {
+				creator.value.dispose();
 				creator.value = null;
 			}
 
@@ -180,6 +181,7 @@ export default defineComponent({
 		onUnmounted(() => {
 			isMounted.value = false;
 			if (creator.value) {
+				creator.value.dispose();
 				creator.value = null;
 			}
 		});
