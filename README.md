@@ -9,29 +9,25 @@ A Directus bundle extension that integrates [SurveyJS Creator](https://surveyjs.
 
 - **Visual Survey Designer**: Use SurveyJS Creator's intuitive drag-and-drop interface within Directus
 - **JSON Storage**: Save survey definitions as JSON in Directus collections
-- **License Key Management**: Securely serve SurveyJS license keys via environment variables
-- **Directus 11 Compatible**: Built for the latest Directus version
-- **TypeScript**: Fully typed with Vue 3 Composition API
-- **Test Coverage**: Comprehensive test suite with Vitest
 
-## Installation
-
-### Prerequisites
+## Requirements
 
 - Directus 11.0.0 or later
 - Node.js 22.x or later
 - npm or yarn
 
-### Install from GitHub Packages
+## Installation
 
-1. Create a `.npmrc` file in your project root (or copy `.npmrc.example`):
+### From GitHub Packages
+
+1. Create a `.npmrc` file in your project root:
 
 ```bash
 @dulltz:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
-2. Set your GitHub personal access token:
+2. Set your GitHub personal access token (requires `read:packages` permission):
 
 ```bash
 export GITHUB_TOKEN=your_github_token_here
@@ -43,11 +39,7 @@ export GITHUB_TOKEN=your_github_token_here
 npm install @dulltz/directus-surveyjs-creator
 ```
 
-**Note**: You need a GitHub personal access token with `read:packages` permission. Create one at: https://github.com/settings/tokens
-
-### Install from Source
-
-Or add directly to your Directus extensions directory:
+### From Source
 
 ```bash
 cd your-directus-project/extensions
@@ -57,34 +49,17 @@ npm install
 npm run build
 ```
 
-### Docker Compose Setup
-
-This extension includes a Docker Compose configuration for local development:
-
-```bash
-# Set your SurveyJS license key (optional)
-export SURVEY_JS_LICENSE_KEY="your-license-key"
-
-# Start Directus with the extension
-docker-compose up -d
-
-# View logs
-docker-compose logs -f directus
-```
-
-Access Directus at http://localhost:8055:
-- Email: admin@example.com
-- Password: admin
-
 ## Configuration
 
 ### License Key
 
-To use SurveyJS Creator with a license key:
+Set the environment variable in your Directus instance:
 
-1. Set the environment variable in your Directus instance: `SURVEY_JS_LICENSE_KEY=your-license-key-here`
+```bash
+SURVEY_JS_LICENSE_KEY=your-license-key-here
+```
 
-2. The extension automatically serves the license key via the `/surveyjs-license` endpoint
+The extension automatically serves the license key via the `/surveyjs-license` endpoint.
 
 ### Field Setup
 
@@ -96,66 +71,12 @@ To use SurveyJS Creator with a license key:
 
 ## Usage
 
-### Creating a Survey
-
 1. Navigate to your collection
 2. Create a new item or edit an existing one
 3. Use the SurveyJS Creator interface to design your survey
 4. The survey JSON is automatically saved to the field
 
-### Survey Definition Format
-
-The extension stores survey definitions in standard SurveyJS JSON format:
-
-```json
-{
-  "title": "My Survey",
-  "pages": [
-    {
-      "name": "page1",
-      "elements": [
-        {
-          "type": "text",
-          "name": "question1",
-          "title": "What is your name?"
-        }
-      ]
-    }
-  ]
-}
-```
-
-## Development
-
-### Setup
-
-```bash
-# Install dependencies
-npm install
-
-# Start development mode with hot reload
-npm run dev
-
-# Run tests
-npm test
-
-# Run tests with UI
-npm run test:ui
-
-# Generate coverage report
-npm run test:coverage
-
-# Build for production
-npm run build
-
-# Build and restart Directus (for Docker Compose development)
-npm run build:reload
-
-# Validate extension structure
-npm run validate
-```
-
-### Architecture
+## Architecture
 
 This extension is a **bundle extension** containing:
 
@@ -203,88 +124,47 @@ graph TB
     style CreatorVue fill:#FF9800
 ```
 
-#### Component Interaction Flow
-
-1. **Component Mount (`onMounted`)**
-   - Directus Admin UI mounts Interface Component
-   - `props.value` may be `null` initially (Directus loads data asynchronously)
-   - Interface fetches license key from `/surveyjs-license` endpoint
-   - Calls `initializeCreator()` immediately (uses `defaultSurvey` if props.value is null)
-   - Sets up one-time watch to monitor `props.value` changes
-   - Starts 100ms timeout fallback for null props
-
-2. **Async Data Loading (Existing Items)**
-   - Directus API loads field data from database (50-200ms after mount)
-   - `props.value` updates from `null` to actual survey JSON
-   - Watch detects non-null value and triggers force re-initialization
-   - Watch stops itself (`stopWatch()`) to prevent memory issues
-   - Creator now displays saved survey data
-
-3. **New Item Creation**
-   - `props.value` remains `null` (no existing data)
-   - Timeout (100ms) fires, checks `initialLoadComplete` flag
-   - If not initialized, uses `defaultSurvey` to initialize Creator
-   - User can immediately start designing survey
-
-4. **User Interaction & Save**
-   - User designs survey using SurveyJS Creator interface
-   - On save button click, `saveSurveyFunc` is called
-   - JSON is extracted from `creator.JSON`
-   - Emits `@input` event with JSON string
-   - Directus API saves to database field
-
-5. **Component Unmount (`onUnmounted`)**
-   - Sets `isMounted = false` to prevent operations
-   - Cleans up creator instance (`creator.value = null`)
-   - Prevents memory leaks
-
-### Lifecycle Management
+### Component Lifecycle
 
 The extension implements a sophisticated lifecycle management strategy to handle Directus's asynchronous props loading:
 
-- **One-time watch**: Monitors `props.value` changes and stops after initial load
-- **Timeout fallback**: Ensures initialization even when creating new items (props.value = null)
-- **Force re-initialization**: Handles late-arriving data from Directus
+1. **Component Mount**: Interface fetches license key and initializes Creator (uses default survey if no data exists)
+2. **Async Data Loading**: Directus loads field data from database, triggering re-initialization with saved data
+3. **User Interaction**: User designs survey using SurveyJS Creator interface
+4. **Save**: JSON is extracted and saved to Directus via API
+5. **Component Unmount**: Cleanup to prevent memory leaks
 
 For detailed technical documentation, see [LIFECYCLE_CONFLICT_RESOLUTION.md](./LIFECYCLE_CONFLICT_RESOLUTION.md).
 
-## Testing
-
-The project uses Vitest with Vue Test Utils for comprehensive testing:
+## Development
 
 ```bash
-# Run all tests
+# Install dependencies
+npm install
+
+# Start development mode with hot reload
+npm run dev
+
+# Run tests
 npm test
 
-# Watch mode for TDD
-npm run test:watch
+# Build for production
+npm run build
 
-# Visual test UI
-npm run test:ui
-
-# Coverage report
-npm run test:coverage
+# Validate extension structure
+npm run validate
 ```
 
-## Technical Details
+### Local Development with Docker
 
-### Bundle Size
+```bash
+export SURVEY_JS_LICENSE_KEY="optional-license-key"
+docker-compose up -d
+```
 
-- `app.js`: ~3.2MB (includes SurveyJS Creator libraries)
-- `api.js`: ~48KB (license key endpoint)
-
-### Dependencies
-
-- `survey-core`: ^2.3.15
-- `survey-creator-core`: ^2.3.15
-- `survey-creator-vue`: ^2.3.15
-
-### Development Dependencies
-
-- `@directus/extensions-sdk`: 17.0.2
-- `vitest`: ^4.0.8
-- `@vue/test-utils`: ^2.4.6
-- `typescript`: ^5.9.3
+Access Directus at http://localhost:8055:
+- Email: admin@example.com
+- Password: admin
 
 ## Troubleshooting
 
@@ -293,57 +173,12 @@ npm run test:coverage
 1. Ensure the extension is built: `npm run build`
 2. Check that `dist/` directory exists with `app.js` and `api.js`
 3. Verify Directus is running version 11.0.0 or later
-4. Enable `EXTENSIONS_AUTO_RELOAD=true` in your Directus environment
 
-### Browser crashes or freezes
+### Survey JSON not saving
 
-This was a known issue during development, resolved by implementing the one-time watch pattern. If you experience crashes:
-
-1. Clear browser cache
-2. Ensure you're using the latest version of the extension
-3. Check browser console for errors
-
-### Survey JSON not reflecting after save
-
-This issue has been resolved. The extension now properly handles Directus's asynchronous data loading. If you still experience this:
-
-1. Check browser console for errors
-2. Verify the field type is `code` or `json`
+1. Verify the field type is `code` or `json`
+2. Check browser console for errors
 3. Ensure the extension is properly built and loaded
-
-## Publishing
-
-### Publishing to GitHub Packages
-
-The package is automatically published to GitHub Packages when you push a version tag.
-
-**Automatic publish via tag**:
-```bash
-# Update version in package.json (optional, tag will override it)
-npm version patch  # or minor, major
-
-# Create and push tag
-git tag v1.0.1
-git push origin v1.0.1
-
-# GitHub Actions will automatically:
-# 1. Extract version from tag (v1.0.1 → 1.0.1)
-# 2. Update package.json version
-# 3. Run tests and build
-# 4. Publish to GitHub Packages
-```
-
-**Manual publish**:
-```bash
-npm run build
-npm publish
-```
-
-**Using GitHub Actions manually**:
-1. Go to Actions tab → Publish to GitHub Packages
-2. Click "Run workflow"
-3. Optionally specify a version number
-4. The workflow will test, build, and publish
 
 ## License
 
