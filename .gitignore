@@ -144,3 +144,5 @@ vite.config.ts.timestamp-*
 
 # Directus local data
 data/
+
+memo.md
