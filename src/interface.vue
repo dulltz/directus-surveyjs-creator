@@ -30,6 +30,10 @@ export default defineComponent({
 			type: [String, Object],
 			default: null,
 		},
+		disabled: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['input'],
 	setup(props, { emit }) {
@@ -126,17 +130,22 @@ export default defineComponent({
 			const newCreator = new SurveyCreatorModel(creatorOptions);
 			newCreator.JSON = surveyJson;
 
-			newCreator.saveSurveyFunc = (saveNo: number, callback: (saveNo: number, success: boolean) => void) => {
-				if (!isMounted.value) {
-					callback(saveNo, false);
-					return;
-				}
+			// Hide the save button - use Directus's save button instead
+			newCreator.showSaveButton = false;
 
-				const surveyJson = newCreator.JSON;
-				const jsonString = JSON.stringify(surveyJson);
-				emit('input', jsonString);
-				callback(saveNo, true);
-			};
+			// Set readonly mode based on disabled prop (e.g., in revision view)
+			newCreator.readOnly = props.disabled;
+
+			// Auto-sync changes to Directus on any modification (only when not disabled)
+			if (!props.disabled) {
+				newCreator.onModified.add(() => {
+					if (!isMounted.value) return;
+
+					const surveyJson = newCreator.JSON;
+					const jsonString = JSON.stringify(surveyJson);
+					emit('input', jsonString);
+				});
+			}
 
 			creator.value = newCreator;
 			initialLoadComplete.value = true;

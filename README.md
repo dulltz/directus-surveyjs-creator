@@ -22,11 +22,30 @@ A Directus bundle extension that integrates [SurveyJS Creator](https://surveyjs.
 - Node.js 22.x or later
 - npm or yarn
 
-### Install from npm
+### Install from GitHub Packages
+
+1. Create a `.npmrc` file in your project root (or copy `.npmrc.example`):
 
 ```bash
-npm install directus-surveyjs-creator
+@dulltz:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
+
+2. Set your GitHub personal access token:
+
+```bash
+export GITHUB_TOKEN=your_github_token_here
+```
+
+3. Install the package:
+
+```bash
+npm install @dulltz/directus-surveyjs-creator
+```
+
+**Note**: You need a GitHub personal access token with `read:packages` permission. Create one at: https://github.com/settings/tokens
+
+### Install from Source
 
 Or add directly to your Directus extensions directory:
 
@@ -291,6 +310,40 @@ This issue has been resolved. The extension now properly handles Directus's asyn
 1. Check browser console for errors
 2. Verify the field type is `code` or `json`
 3. Ensure the extension is properly built and loaded
+
+## Publishing
+
+### Publishing to GitHub Packages
+
+The package is automatically published to GitHub Packages when you push a version tag.
+
+**Automatic publish via tag**:
+```bash
+# Update version in package.json (optional, tag will override it)
+npm version patch  # or minor, major
+
+# Create and push tag
+git tag v1.0.1
+git push origin v1.0.1
+
+# GitHub Actions will automatically:
+# 1. Extract version from tag (v1.0.1 → 1.0.1)
+# 2. Update package.json version
+# 3. Run tests and build
+# 4. Publish to GitHub Packages
+```
+
+**Manual publish**:
+```bash
+npm run build
+npm publish
+```
+
+**Using GitHub Actions manually**:
+1. Go to Actions tab → Publish to GitHub Packages
+2. Click "Run workflow"
+3. Optionally specify a version number
+4. The workflow will test, build, and publish
 
 ## License
 
