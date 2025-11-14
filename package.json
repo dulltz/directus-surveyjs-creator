@@ -1,9 +1,16 @@
 {
-	"name": "directus-surveyjs-creator",
+	"name": "@dulltz/directus-surveyjs-creator",
 	"description": "Directus extension to create surveys using surveyjs/survey-creator",
 	"icon": "extension",
 	"version": "1.0.0",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/dulltz/directus-surveyjs-creator.git"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
 	"keywords": [
 		"directus",
 		"directus-extension",
