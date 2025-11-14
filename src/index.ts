@@ -8,5 +8,5 @@ export default defineInterface({
 	description: 'Create and edit surveys using SurveyJS Creator',
 	component: InterfaceComponent,
 	options: null,
-	types: ['json', 'code'],
+	types: ['json', 'text'],
 });
