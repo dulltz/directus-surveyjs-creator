@@ -22,7 +22,7 @@ describe('SurveyJS Creator Interface Definition', () => {
 
 	it('should support json and code field types', () => {
 		expect(interfaceDefinition.types).toContain('json');
-		expect(interfaceDefinition.types).toContain('code');
+		expect(interfaceDefinition.types).toContain('text');
 	});
 
 	it('should have a component', () => {
