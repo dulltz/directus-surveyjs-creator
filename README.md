@@ -186,25 +186,38 @@ graph TB
 
 #### Component Interaction Flow
 
-1. **Initial Load**
-   - Directus Admin UI loads the field with Interface Component
+1. **Component Mount (`onMounted`)**
+   - Directus Admin UI mounts Interface Component
+   - `props.value` may be `null` initially (Directus loads data asynchronously)
    - Interface fetches license key from `/surveyjs-license` endpoint
-   - Props may be `null` initially (async loading)
+   - Calls `initializeCreator()` immediately (uses `defaultSurvey` if props.value is null)
+   - Sets up one-time watch to monitor `props.value` changes
+   - Starts 100ms timeout fallback for null props
 
-2. **Initialization**
-   - Interface initializes `SurveyCreatorModel` with options
-   - One-time watch monitors `props.value` changes
-   - Timeout fallback (100ms) ensures initialization for new items
+2. **Async Data Loading (Existing Items)**
+   - Directus API loads field data from database (50-200ms after mount)
+   - `props.value` updates from `null` to actual survey JSON
+   - Watch detects non-null value and triggers force re-initialization
+   - Watch stops itself (`stopWatch()`) to prevent memory issues
+   - Creator now displays saved survey data
 
-3. **Data Flow**
-   - User designs survey in SurveyJS Creator
-   - On save, JSON is emitted via `@input` event
-   - Directus saves JSON to database field
+3. **New Item Creation**
+   - `props.value` remains `null` (no existing data)
+   - Timeout (100ms) fires, checks `initialLoadComplete` flag
+   - If not initialized, uses `defaultSurvey` to initialize Creator
+   - User can immediately start designing survey
 
-4. **Lifecycle Management**
-   - Watch stops after first non-null value (prevents memory issues)
-   - Force re-initialization when real data arrives from Directus
-   - Proper cleanup on component unmount
+4. **User Interaction & Save**
+   - User designs survey using SurveyJS Creator interface
+   - On save button click, `saveSurveyFunc` is called
+   - JSON is extracted from `creator.JSON`
+   - Emits `@input` event with JSON string
+   - Directus API saves to database field
+
+5. **Component Unmount (`onUnmounted`)**
+   - Sets `isMounted = false` to prevent operations
+   - Cleans up creator instance (`creator.value = null`)
+   - Prevents memory leaks
 
 ### Lifecycle Management
 
