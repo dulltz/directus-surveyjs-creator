@@ -17,6 +17,7 @@ A Directus bundle extension that integrates [SurveyJS Creator](https://surveyjs.
 - Directus 11.0.0 or later
 - Node.js 22.x or later
 - npm or yarn
+- SurveyJS license key
 
 ## Installation
 
