@@ -129,34 +129,13 @@ graph TB
 
 ### Component Lifecycle
 
-The extension implements a sophisticated lifecycle management strategy to handle Directus's asynchronous props loading:
+To integrate the lifecycle management of the survey-creator component with that of Data Studio, we implement the following lifecycle flow:
 
 1. **Component Mount**: Interface fetches license key and initializes Creator (uses default survey if no data exists)
 2. **Async Data Loading**: Directus loads field data from database, triggering re-initialization with saved data
 3. **User Interaction**: User designs survey using SurveyJS Creator interface
 4. **Save**: JSON is extracted and saved to Directus via API
 5. **Component Unmount**: Cleanup to prevent memory leaks
-
-For detailed technical documentation, see [LIFECYCLE_CONFLICT_RESOLUTION.md](./LIFECYCLE_CONFLICT_RESOLUTION.md).
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Start development mode with hot reload
-npm run dev
-
-# Run tests
-npm test
-
-# Build for production
-npm run build
-
-# Validate extension structure
-npm run validate
-```
 
 ### Local Development with Docker
 
@@ -169,20 +148,6 @@ Access Directus at http://localhost:8055:
 - Email: admin@example.com
 - Password: admin
 
-## Troubleshooting
-
-### Extension not appearing in Directus
-
-1. Ensure the extension is built: `npm run build`
-2. Check that `dist/` directory exists with `app.js` and `api.js`
-3. Verify Directus is running version 11.0.0 or later
-
-### Survey JSON not saving
-
-1. Verify the field type is `code` or `json`
-2. Check browser console for errors
-3. Ensure the extension is properly built and loaded
-
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details
@@ -191,4 +156,3 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 - [Directus Extensions Documentation](https://docs.directus.io/extensions/)
 - [SurveyJS Creator Documentation](https://surveyjs.io/survey-creator/documentation/overview)
-- [Vue 3 Documentation](https://vuejs.org/)
