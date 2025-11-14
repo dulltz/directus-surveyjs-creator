@@ -143,6 +143,69 @@ This extension is a **bundle extension** containing:
 1. **Interface Component** (`surveyjs-creator-interface`): Vue 3 component that renders SurveyJS Creator
 2. **API Endpoint** (`surveyjs-license`): Serves the SurveyJS license key from environment variables
 
+```mermaid
+graph TB
+    subgraph "Directus Instance"
+        Admin[Directus Admin UI]
+        API[Directus API]
+        DB[(Database)]
+    end
+
+    subgraph "Extension Bundle"
+        Interface[Interface Component<br/>surveyjs-creator-interface]
+        Endpoint[API Endpoint<br/>/surveyjs-license]
+    end
+
+    subgraph "SurveyJS Libraries"
+        Creator[SurveyCreatorModel]
+        CreatorVue[SurveyCreatorComponent]
+        Core[survey-core]
+    end
+
+    subgraph "Environment"
+        Env[SURVEY_JS_LICENSE_KEY]
+    end
+
+    Admin -->|Loads field| Interface
+    Interface -->|Fetches license| Endpoint
+    Endpoint -->|Reads| Env
+    Endpoint -->|Returns license| Interface
+    Interface -->|Initializes| Creator
+    Interface -->|Renders| CreatorVue
+    Creator -->|Uses| Core
+    Interface -->|Saves JSON| API
+    API -->|Stores| DB
+    DB -->|Loads async| API
+    API -->|Props update| Interface
+
+    style Interface fill:#4CAF50
+    style Endpoint fill:#2196F3
+    style Creator fill:#FF9800
+    style CreatorVue fill:#FF9800
+```
+
+#### Component Interaction Flow
+
+1. **Initial Load**
+   - Directus Admin UI loads the field with Interface Component
+   - Interface fetches license key from `/surveyjs-license` endpoint
+   - Props may be `null` initially (async loading)
+
+2. **Initialization**
+   - Interface initializes `SurveyCreatorModel` with options
+   - One-time watch monitors `props.value` changes
+   - Timeout fallback (100ms) ensures initialization for new items
+
+3. **Data Flow**
+   - User designs survey in SurveyJS Creator
+   - On save, JSON is emitted via `@input` event
+   - Directus saves JSON to database field
+
+4. **Lifecycle Management**
+   - Watch stops after first non-null value (prevents memory issues)
+   - Force re-initialization when real data arrives from Directus
+   - Proper cleanup on component unmount
+
 ### Lifecycle Management
 
 The extension implements a sophisticated lifecycle management strategy to handle Directus's asynchronous props loading:
