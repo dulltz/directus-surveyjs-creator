@@ -143,6 +143,82 @@ This extension is a **bundle extension** containing:
 1. **Interface Component** (`surveyjs-creator-interface`): Vue 3 component that renders SurveyJS Creator
 2. **API Endpoint** (`surveyjs-license`): Serves the SurveyJS license key from environment variables
 
+```mermaid
+graph TB
+    subgraph "Directus Instance"
+        Admin[Directus Admin UI]
+        API[Directus API]
+        DB[(Database)]
+    end
+
+    subgraph "Extension Bundle"
+        Interface[Interface Component<br/>surveyjs-creator-interface]
+        Endpoint[API Endpoint<br/>/surveyjs-license]
+    end
+
+    subgraph "SurveyJS Libraries"
+        Creator[SurveyCreatorModel]
+        CreatorVue[SurveyCreatorComponent]
+        Core[survey-core]
+    end
+
+    subgraph "Environment"
+        Env[SURVEY_JS_LICENSE_KEY]
+    end
+
+    Admin -->|Loads field| Interface
+    Interface -->|Fetches license| Endpoint
+    Endpoint -->|Reads| Env
+    Endpoint -->|Returns license| Interface
+    Interface -->|Initializes| Creator
+    Interface -->|Renders| CreatorVue
+    Creator -->|Uses| Core
+    Interface -->|Saves JSON| API
+    API -->|Stores| DB
+    DB -->|Loads async| API
+    API -->|Props update| Interface
+
+    style Interface fill:#4CAF50
+    style Endpoint fill:#2196F3
+    style Creator fill:#FF9800
+    style CreatorVue fill:#FF9800
+```
+
+#### Component Interaction Flow
+
+1. **Component Mount (`onMounted`)**
+   - Directus Admin UI mounts Interface Component
+   - `props.value` may be `null` initially (Directus loads data asynchronously)
+   - Interface fetches license key from `/surveyjs-license` endpoint
+   - Calls `initializeCreator()` immediately (uses `defaultSurvey` if props.value is null)
+   - Sets up one-time watch to monitor `props.value` changes
+   - Starts 100ms timeout fallback for null props
+
+2. **Async Data Loading (Existing Items)**
+   - Directus API loads field data from database (50-200ms after mount)
+   - `props.value` updates from `null` to actual survey JSON
+   - Watch detects non-null value and triggers force re-initialization
+   - Watch stops itself (`stopWatch()`) to prevent memory issues
+   - Creator now displays saved survey data
+
+3. **New Item Creation**
+   - `props.value` remains `null` (no existing data)
+   - Timeout (100ms) fires, checks `initialLoadComplete` flag
+   - If not initialized, uses `defaultSurvey` to initialize Creator
+   - User can immediately start designing survey
+
+4. **User Interaction & Save**
+   - User designs survey using SurveyJS Creator interface
+   - On save button click, `saveSurveyFunc` is called
+   - JSON is extracted from `creator.JSON`
+   - Emits `@input` event with JSON string
+   - Directus API saves to database field
+
+5. **Component Unmount (`onUnmounted`)**
+   - Sets `isMounted = false` to prevent operations
+   - Cleans up creator instance (`creator.value = null`)
+   - Prevents memory leaks
+
 ### Lifecycle Management
 
 The extension implements a sophisticated lifecycle management strategy to handle Directus's asynchronous props loading:
