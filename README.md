@@ -63,10 +63,7 @@ Access Directus at http://localhost:8055:
 
 To use SurveyJS Creator with a license key:
 
-1. Set the environment variable in your Directus instance:
-   ```bash
-   SURVEY_JS_LICENSE_KEY=your-license-key-here
-   ```
+1. Set the environment variable in your Directus instance: `SURVEY_JS_LICENSE_KEY=your-license-key-here`
 
 2. The extension automatically serves the license key via the `/surveyjs-license` endpoint
 
@@ -131,6 +128,9 @@ npm run test:coverage
 
 # Build for production
 npm run build
+
+# Build and restart Directus (for Docker Compose development)
+npm run build:reload
 
 # Validate extension structure
 npm run validate
@@ -247,27 +247,6 @@ npm run test:ui
 npm run test:coverage
 ```
 
-### Test Coverage
-
-The test suite includes:
-- Basic component mounting and props handling
-- JSON parsing (string, object, null, invalid)
-- SurveyJS Creator rendering
-- Async props loading (Directus lifecycle)
-- Timeout fallback for new items
-- Force re-initialization when data arrives
-- License key fetch error handling
-- Component cleanup on unmount
-
-## CI/CD
-
-The project uses GitHub Actions for continuous integration:
-
-- **Test**: Runs on Node.js 22.x
-- **Lint**: TypeScript type checking
-- **Build**: Builds extension and validates structure
-- **Coverage**: Generates and uploads coverage reports to Codecov
-
 ## Technical Details
 
 ### Bundle Size
@@ -313,25 +292,9 @@ This issue has been resolved. The extension now properly handles Directus's asyn
 2. Verify the field type is `code` or `json`
 3. Ensure the extension is properly built and loaded
 
-## Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Write tests for new functionality
-4. Ensure all tests pass: `npm test`
-5. Submit a pull request
-
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details
-
-## Credits
-
-- [Directus](https://directus.io/) - Open-source headless CMS
-- [SurveyJS](https://surveyjs.io/) - Survey library
-- Developed with d using TDD approach
 
 ## Links
 

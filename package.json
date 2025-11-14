@@ -39,6 +39,7 @@
 	},
 	"scripts": {
 		"build": "directus-extension build",
+		"build:reload": "npm run build && docker-compose restart directus",
 		"dev": "directus-extension build -w --no-minify",
 		"link": "directus-extension link",
 		"validate": "directus-extension validate",
