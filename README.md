@@ -5,6 +5,8 @@
 
 A Directus bundle extension that integrates [SurveyJS Creator](https://surveyjs.io/survey-creator) as a custom interface, allowing you to visually design surveys within Directus and store survey definitions as JSON.
 
+![Demo](./demo.gif)
+
 ## Features
 
 - **Visual Survey Designer**: Use SurveyJS Creator's intuitive drag-and-drop interface within Directus
